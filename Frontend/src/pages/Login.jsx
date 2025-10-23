@@ -23,7 +23,7 @@ const Login = () => {
     try {
       const result = await login(data);
       if (result.success) {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Erro no login:', error);

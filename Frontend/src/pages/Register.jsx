@@ -54,7 +54,7 @@ const Register = () => {
     try {
       const result = await registerUser(data);
       if (result.success) {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Erro no cadastro:', error);

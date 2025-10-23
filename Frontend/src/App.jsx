@@ -6,8 +6,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Home from './pages/Home';
-import HomeTest from './pages/HomeTest';
 import Dashboard from './pages/Dashboard';
 
 function App() {
@@ -17,7 +15,6 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<HomeTest />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
@@ -31,8 +28,11 @@ function App() {
               } 
             />
             
-            {/* 404 - Redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Default redirect to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            
+            {/* 404 - Redirect to login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
           
           {/* Toast notifications */}
