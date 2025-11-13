@@ -6,6 +6,7 @@ require('dotenv').config();
 
 // Importar rotas
 const userRoutes = require('./routes/userRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,6 +64,7 @@ app.get('/health', (req, res) => {
 
 // Rotas da API
 app.use('/api/users', userRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {
@@ -73,6 +75,7 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       users: '/api/users',
+      rooms: '/api/rooms',
       documentation: 'https://github.com/mavi3006/Hotel-Mavi'
     }
   });
@@ -103,6 +106,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor Hotel Mavi rodando na porta ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`👥 API Users: http://localhost:${PORT}/api/users`);
+  console.log(`🏨 API Rooms: http://localhost:${PORT}/api/rooms`);
   console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
 
