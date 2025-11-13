@@ -1,33 +1,48 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-// Configuração do Supabase
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Variáveis de ambiente obrigatórias
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Variáveis de ambiente SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórias');
+// Validação das variáveis
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+  throw new Error('Variáveis de ambiente obrigatórias: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY');
 }
 
-// Cliente Supabase com service role key para operações administrativas
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+// Cliente Supabase para operações administrativas (service role)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: {
     autoRefreshToken: false,
     persistSession: false
   }
 });
 
-// Cliente Supabase com anon key para operações do usuário
-const supabaseAnon = createClient(
-  supabaseUrl, 
-  process.env.SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true
-    }
+// Cliente Supabase para operações do usuário (anon key)
+const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true
   }
-);
+});
+
+// Testar conexão com Supabase
+async function testConnection() {
+  try {
+    const { data, error } = await supabase.from('users').select('count').limit(1);
+    if (error && error.code !== 'PGRST116') { // PGRST116 = tabela vazia (ok)
+      console.warn('⚠️  Aviso na conexão com Supabase:', error.message);
+    } else {
+      console.log('✅ Conexão com Supabase estabelecida com sucesso');
+    }
+  } catch (error) {
+    console.error('❌ Erro ao testar conexão com Supabase:', error.message);
+  }
+}
+
+// Testar conexão ao carregar o módulo
+testConnection();
 
 module.exports = {
   supabase,

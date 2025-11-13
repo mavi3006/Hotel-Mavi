@@ -72,8 +72,7 @@ const createRoom = async (req, res) => {
       console.error('Erro ao criar quarto:', error);
       return res.status(500).json({
         success: false,
-        message: 'Erro interno do servidor',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        message: 'Erro interno do servidor'
       });
     }
 

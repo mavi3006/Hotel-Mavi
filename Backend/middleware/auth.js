@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken');
-const { supabase } = require('../config/database');
+const { supabaseAnon } = require('../config/database');
 
-// Middleware para autenticar token JWT
+// Middleware para autenticar usando Supabase
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -14,25 +13,32 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Verificar e decodificar token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'seu-jwt-secret-aqui');
-    
-    // Buscar usuário no banco de dados
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, nome, email, active, deleted_at')
-      .eq('id', decoded.userId)
-      .eq('deleted_at', null)
-      .single();
+    // Verificar token com Supabase
+    const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({
         success: false,
-        message: 'Usuário não encontrado ou token inválido'
+        message: 'Token inválido ou expirado'
       });
     }
 
-    if (!user.active) {
+    // Buscar informações do usuário na tabela users
+    const { data: userData, error: userError } = await supabaseAnon
+      .from('users')
+      .select('id, nome, email, active, deleted_at')
+      .eq('id', user.id)
+      .eq('deleted_at', null)
+      .single();
+
+    if (userError || !userData) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    if (!userData.active) {
       return res.status(401).json({
         success: false,
         message: 'Conta desativada'
@@ -41,27 +47,13 @@ const authenticateToken = async (req, res, next) => {
 
     // Adicionar informações do usuário à requisição
     req.user = {
-      id: user.id,
-      nome: user.nome,
-      email: user.email
+      id: userData.id,
+      nome: userData.nome,
+      email: userData.email
     };
 
     next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token inválido'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expirado'
-      });
-    }
-
     console.error('Erro na autenticação:', error);
     return res.status(500).json({
       success: false,
@@ -73,8 +65,7 @@ const authenticateToken = async (req, res, next) => {
 // Middleware para verificar se o usuário é admin
 const requireAdmin = async (req, res, next) => {
   try {
-    // Buscar informações completas do usuário incluindo role
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAnon
       .from('users')
       .select('id, nome, email, role, active, deleted_at')
       .eq('id', req.user.id)
@@ -88,9 +79,6 @@ const requireAdmin = async (req, res, next) => {
       });
     }
 
-    // Verificar se o usuário é admin
-    // Assumindo que existe um campo 'role' na tabela users
-    // Se não existir, você pode ajustar esta lógica
     if (user.role !== 'admin' && user.role !== 'administrador') {
       return res.status(403).json({
         success: false,

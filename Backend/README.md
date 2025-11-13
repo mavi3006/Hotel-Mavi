@@ -1,240 +1,64 @@
 # Hotel Mavi - Backend API
 
-API REST para o sistema de gerenciamento de hotel desenvolvida com Node.js, Express e Supabase.
+Backend simplificado usando apenas Supabase.
 
-## 🚀 Funcionalidades
+## 📋 Variáveis de Ambiente
 
-- ✅ Cadastro de usuários com validação
-- ✅ Login com JWT
-- ✅ Autenticação e autorização
-- ✅ CRUD completo de usuários
-- ✅ Soft delete
-- ✅ Validação de CPF
-- ✅ Criptografia de senhas com bcrypt
-- ✅ Rate limiting
-- ✅ Middleware de segurança
+Apenas **3 variáveis** são necessárias:
 
-## 📋 Pré-requisitos
-
-- Node.js (versão 16 ou superior)
-- npm ou yarn
-- Conta no Supabase
-- Banco de dados PostgreSQL (Supabase)
-
-## 🛠️ Instalação
-
-1. **Clone o repositório e navegue para a pasta Backend:**
-```bash
-cd Backend
+```env
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+SUPABASE_ANON_KEY=sua-anon-key
 ```
 
-2. **Instale as dependências:**
+## 🚀 Instalação
+
+1. **Instalar dependências:**
 ```bash
 npm install
 ```
 
-3. **Configure as variáveis de ambiente:**
+2. **Configurar variáveis de ambiente:**
 ```bash
-# Renomeie o arquivo .env.example para .env
+# Copie o .env.example para .env
 cp .env.example .env
+
+# Edite o .env com suas credenciais do Supabase
 ```
 
-4. **Configure o arquivo .env com suas credenciais do Supabase:**
-```env
-SUPABASE_URL=https://seu-projeto.supabase.co
-SUPABASE_ANON_KEY=sua-chave-anonima-aqui
-SUPABASE_SERVICE_ROLE_KEY=sua-chave-servico-aqui
-JWT_SECRET=seu-jwt-secret-super-seguro-aqui
-PORT=3000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:3000
-```
-
-5. **Execute o SQL no Supabase para criar a tabela users:**
-```sql
-CREATE TABLE public.users (
-  id integer NOT NULL DEFAULT nextval('users_id_seq'::regclass),
-  nome text NOT NULL,
-  pronome text,
-  senha text NOT NULL,
-  email text NOT NULL UNIQUE,
-  tel text,
-  data_nascimento date,
-  cpf text NOT NULL UNIQUE,
-  created_at timestamp with time zone DEFAULT now(),
-  active boolean DEFAULT true,
-  deleted_at timestamp with time zone,
-  deleted_by text,
-  CONSTRAINT users_pkey PRIMARY KEY (id)
-);
-```
-
-## 🏃‍♂️ Executando o projeto
-
-**Desenvolvimento:**
-```bash
-npm run dev
-```
-
-**Produção:**
+3. **Executar:**
 ```bash
 npm start
 ```
 
-O servidor estará rodando em `http://localhost:3000`
+## 📁 Estrutura
 
-## 📚 Documentação da API
-
-### Endpoints de Usuários
-
-#### **POST** `/api/users/register`
-Cadastra um novo usuário.
-
-**Body:**
-```json
-{
-  "nome": "João Silva",
-  "pronome": "ele/dele",
-  "email": "joao@email.com",
-  "senha": "123456",
-  "tel": "(11) 99999-9999",
-  "data_nascimento": "1990-01-01",
-  "cpf": "12345678901"
-}
+```
+Backend/
+├── config/
+│   └── database.js      # Configuração Supabase
+├── controllers/
+│   ├── userController.js
+│   └── roomController.js
+├── middleware/
+│   └── auth.js          # Autenticação Supabase
+├── routes/
+│   ├── userRoutes.js
+│   └── roomRoutes.js
+└── server.js            # Servidor Express
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Usuário cadastrado com sucesso",
-  "data": {
-    "user": {
-      "id": 1,
-      "nome": "João Silva",
-      "email": "joao@email.com",
-      "tel": "(11) 99999-9999",
-      "data_nascimento": "1990-01-01",
-      "created_at": "2024-01-01T00:00:00.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
+## 🔌 Endpoints
 
-#### **POST** `/api/users/login`
-Realiza login do usuário.
+- `GET /health` - Health check
+- `GET /api/users` - Listar usuários
+- `POST /api/users/register` - Registrar usuário
+- `POST /api/users/login` - Login
+- `GET /api/rooms` - Listar quartos
+- `POST /api/rooms` - Criar quarto
 
-**Body:**
-```json
-{
-  "email": "joao@email.com",
-  "senha": "123456"
-}
-```
+## ✅ Teste de Conexão
 
-#### **GET** `/api/users/profile`
-Obtém o perfil do usuário autenticado.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
-
-#### **PUT** `/api/users/profile`
-Atualiza o perfil do usuário autenticado.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
-
-#### **PUT** `/api/users/change-password`
-Altera a senha do usuário autenticado.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
-
-**Body:**
-```json
-{
-  "senha_atual": "123456",
-  "nova_senha": "novaSenha123"
-}
-```
-
-### Endpoints Administrativos
-
-#### **GET** `/api/users/admin/users`
-Lista todos os usuários (apenas admin).
-
-**Headers:**
-```
-Authorization: Bearer <admin-token>
-```
-
-#### **DELETE** `/api/users/admin/users/:id`
-Remove um usuário (soft delete, apenas admin).
-
-**Headers:**
-```
-Authorization: Bearer <admin-token>
-```
-
-## 🔒 Segurança
-
-- Senhas criptografadas com bcrypt (12 rounds)
-- JWT para autenticação
-- Rate limiting (100 req/15min geral, 5 req/15min para login)
-- Validação de entrada com express-validator
-- Headers de segurança com helmet
-- CORS configurado
-- Soft delete para preservar dados
-
-## 🧪 Testando a API
-
-Use o Postman, Insomnia ou curl para testar os endpoints:
-
-```bash
-# Health check
-curl http://localhost:3000/health
-
-# Cadastro
-curl -X POST http://localhost:3000/api/users/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "Teste",
-    "email": "teste@email.com",
-    "senha": "123456",
-    "cpf": "12345678901"
-  }'
-
-# Login
-curl -X POST http://localhost:3000/api/users/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teste@email.com",
-    "senha": "123456"
-  }'
-```
-
-## 📝 Logs
-
-O servidor registra automaticamente:
-- Todas as requisições HTTP
-- Erros e exceções
-- Tentativas de login
-
-## 🚀 Deploy
-
-Para fazer deploy em produção:
-
-1. Configure as variáveis de ambiente de produção
-2. Execute `npm install --production`
-3. Execute `npm start`
-
-## 📞 Suporte
-
-Para dúvidas ou problemas, abra uma issue no repositório.
+O sistema testa automaticamente a conexão com Supabase ao iniciar.
+Verifique os logs para confirmar: `✅ Conexão com Supabase estabelecida com sucesso`

@@ -1,16 +1,6 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const { supabase } = require('../config/database');
-
-// Função para gerar token JWT
-const generateToken = (userId) => {
-  return jwt.sign(
-    { userId }, 
-    process.env.JWT_SECRET || 'seu-jwt-secret-aqui',
-    { expiresIn: '24h' }
-  );
-};
+const { supabase, supabaseAnon } = require('../config/database');
 
 // Função para validar CPF (básica)
 const validateCPF = (cpf) => {
@@ -110,10 +100,25 @@ const registerUser = async (req, res) => {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(senha, saltRounds);
 
-    // Criar usuário
+    // Criar usuário no Supabase Auth primeiro
+    const { data: authUser, error: authError } = await supabaseAnon.auth.signUp({
+      email: email,
+      password: senha
+    });
+
+    if (authError || !authUser.user) {
+      console.error('Erro ao criar usuário no Auth:', authError);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao criar conta de usuário'
+      });
+    }
+
+    // Criar usuário na tabela users
     const { data: newUser, error } = await supabase
       .from('users')
       .insert([{
+        id: authUser.user.id,
         nome,
         pronome: pronome || null,
         email,
@@ -134,8 +139,8 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Gerar token
-    const token = generateToken(newUser.id);
+    // Obter token de sessão
+    const token = authUser.session?.access_token || null;
 
     res.status(201).json({
       success: true,
@@ -202,14 +207,24 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Fazer login com Supabase Auth para obter token
+    const { data: authData, error: authError } = await supabaseAnon.auth.signInWithPassword({
+      email: email,
+      password: senha
+    });
+
+    if (authError || !authData.session) {
+      return res.status(401).json({
+        success: false,
+        message: 'Credenciais inválidas'
+      });
+    }
+
     // Atualizar último login
     await supabase
       .from('users')
       .update({ ultimo_login: new Date().toISOString() })
       .eq('id', user.id);
-
-    // Gerar token
-    const token = generateToken(user.id);
 
     res.json({
       success: true,
@@ -220,7 +235,7 @@ const loginUser = async (req, res) => {
           nome: user.nome,
           email: user.email
         },
-        token
+        token: authData.session.access_token
       }
     });
 
