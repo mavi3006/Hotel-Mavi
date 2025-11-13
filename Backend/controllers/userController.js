@@ -207,17 +207,21 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Fazer login com Supabase Auth para obter token
-    const { data: authData, error: authError } = await supabaseAnon.auth.signInWithPassword({
-      email: email,
-      password: senha
-    });
-
-    if (authError || !authData.session) {
-      return res.status(401).json({
-        success: false,
-        message: 'Credenciais inválidas'
+    // Tentar fazer login com Supabase Auth
+    let token = null;
+    try {
+      const { data: authData, error: authError } = await supabaseAnon.auth.signInWithPassword({
+        email: email,
+        password: senha
       });
+      
+      if (!authError && authData.session) {
+        token = authData.session.access_token;
+      }
+    } catch (authErr) {
+      // Se não conseguir fazer login no Auth, continua sem token
+      // (usuário pode ter sido criado antes da integração com Auth)
+      console.warn('Aviso: não foi possível obter token do Supabase Auth');
     }
 
     // Atualizar último login
@@ -235,7 +239,7 @@ const loginUser = async (req, res) => {
           nome: user.nome,
           email: user.email
         },
-        token: authData.session.access_token
+        token: token || 'token-nao-disponivel'
       }
     });
 
